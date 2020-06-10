@@ -1,8 +1,6 @@
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -14,7 +12,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 
 public class AESUtil{
@@ -34,7 +35,6 @@ public class AESUtil{
 
             return cipher.doFinal(content);// 加密
         } catch (Exception ex) {
-            Logger.getLogger(AESUtil.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return null;
@@ -61,7 +61,6 @@ public class AESUtil{
             //byte[] result = cipher.doFinal(decoder.decode(content));
             return cipher.doFinal(content);
         } catch (Exception ex) {
-            Logger.getLogger(AESUtil.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return null;
@@ -80,7 +79,6 @@ public class AESUtil{
 
             return cipher;
         } catch (Exception ex) {
-            Logger.getLogger(AESUtil.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return null;
@@ -105,13 +103,149 @@ public class AESUtil{
         }
     }
 
+
+
     /**
-     * 生成加密秘钥
      *
+     * @param filename
      * @return
+     * @throws IOException
      */
-    private static SecretKeySpec getSecretKey(final String key) {
-        return new SecretKeySpec(key.getBytes(), KEY_ALGORITHM);// 转换为AES专用密钥
+    public static void encryptFile(String filename, String outfilename, String key, String iv) throws IOException{
+        File f = new File(filename);
+        if(!f.exists()) {
+            throw new FileNotFoundException(filename);
+        }
+
+        File outputFile = new File(outfilename);
+        FileOutputStream outputFileStream = null;
+
+        // try to open file output.txt
+        try {
+            outputFileStream = new FileOutputStream(outputFile);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        BufferedInputStream in = null;
+        try{
+            in = new BufferedInputStream(new FileInputStream(f));
+            int buf_size = 1024*1024-1;
+            byte[] buffer = new byte[buf_size];
+            int len = 0;
+            while(-1 != (len = in.read(buffer,0,buf_size))){
+                byte[] ss = AESUtil.subBytes(buffer,0,len);
+                outputFileStream.write(AESUtil.encrypt(ss, key, iv));
+            }
+            outputFileStream.close();
+        }catch (IOException e) {
+            e.printStackTrace();
+            throw e;
+        }finally{
+            try{
+                in.close();
+            }catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     *
+     * @param filename
+     * @return
+     * @throws IOException
+     */
+    public static void decryptFile(String filename, String outfilename, String key, String iv) throws IOException{
+        File f = new File(filename);
+        if(!f.exists()){
+            throw new FileNotFoundException(filename);
+        }
+
+        File outputFile = new File(outfilename);
+        FileOutputStream outputFileStream = null;
+
+        // try to open file output.txt
+        try {
+            outputFileStream = new FileOutputStream(outputFile);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        BufferedInputStream in = null;
+        try{
+            in = new BufferedInputStream(new FileInputStream(f));
+            int buf_size = 1024*1024;
+            byte[] buffer = new byte[buf_size];
+            int len = 0;
+            while(-1 != (len = in.read(buffer,0,buf_size))){
+                byte[] ss = AESUtil.subBytes(buffer,0,len);
+                outputFileStream.write(AESUtil.decrypt(ss, key, iv));
+            }
+            outputFileStream.close();
+        }catch (IOException e) {
+            e.printStackTrace();
+            throw e;
+        }finally{
+            try{
+                in.close();
+            }catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void compressFile(String filename, String outfilename) throws Exception {
+        File f = new File(filename);
+        if(!f.exists()){
+            throw new FileNotFoundException(filename);
+        }
+
+        File outputFile = new File(outfilename);
+        GZIPOutputStream os = new GZIPOutputStream(new FileOutputStream(outputFile));
+        BufferedInputStream is = new BufferedInputStream(new FileInputStream(f));
+
+        int count;
+        int buf_size = 1024*1024;
+        byte data[] = new byte[buf_size];
+        while ((count = is.read(data, 0, buf_size)) != -1) {
+            os.write(data, 0, count);
+        }
+
+        os.finish();
+        os.flush();
+        os.close();
+        is.close();
+    }
+
+    public static void decompressFile(String filename, String outfilename) throws Exception {
+        File f = new File(filename);
+        if(!f.exists()){
+            throw new FileNotFoundException(filename);
+        }
+
+        GZIPInputStream gis = new GZIPInputStream(new FileInputStream(f));
+        FileOutputStream os = new FileOutputStream(new File(outfilename));
+
+        int count;
+        int buf_size = 1024*1024;
+        byte data[] = new byte[buf_size];
+        while ((count = gis.read(data, 0, buf_size)) != -1) {
+            os.write(data, 0, count);
+        }
+
+        gis.close();
+
+        //os.finish();
+        os.flush();
+        os.close();
+        gis.close();
+    }
+
+    public static byte[] subBytes(byte[] src, int begin, int count) {
+        byte[] bs = new byte[count];
+        System.arraycopy(src, begin, bs, 0, count);
+        return bs;
     }
 
     public static void main(String[] args) {
@@ -152,7 +286,11 @@ public class AESUtil{
             byte[] ss = AESUtil.encrypt(content.getBytes("UTF-8"), key, iv);
             //System.out.println(new String(ss, "UTF-8"));
             //System.out.println(new String(ss, "iso-8859-1"));
-            AESUtil.writeFile("1.dat", ss);
+            //AESUtil.writeFile("1.dat", ss);
+            AESUtil.encryptFile("new.txt", "2.dat", key, iv);
+            AESUtil.decryptFile("2.dat", "new2.txt", key, iv);
+            AESUtil.compressFile("new.txt", "new.txt.gz");
+            AESUtil.decompressFile("new.txt.gz", "new.txt.decompress");
         }
         catch(Exception ex) {
 
