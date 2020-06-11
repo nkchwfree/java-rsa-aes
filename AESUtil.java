@@ -103,8 +103,6 @@ public class AESUtil{
         }
     }
 
-
-
     /**
      *
      * @param filename
@@ -249,52 +247,30 @@ public class AESUtil{
     }
 
     public static void main(String[] args) {
-        // try {
-
-        //     final Base64.Encoder encoder = Base64.getEncoder();
-        //     final String text = "字串文字";
-        //     final byte[] textByte = text.getBytes("UTF-8");
-        //     //編碼
-        //     final String encodedText = encoder.encodeToString(textByte);
-        //     System.out.println(encodedText);
-
-        //     //解碼
-        //     final Base64.Decoder decoder = Base64.getDecoder();
-        //     System.out.println(new String(decoder.decode(encodedText), "UTF-8"));
-        // }
-        // catch(Exception e) {
-        //     System.out.println("exc");
-        // }
-
         String content = "12345678901234567890中国=o=人";
         String key = "12345678abcdefgh";
         String iv = "0123456789876543";
-        //System.out.println("content:" + content);
+        System.out.println("明文:" + content+"\n\n");
 
-
-        // String s1 = AESUtil.encrypt(content, key, iv);
-        // System.out.println("s1:" + s1);
-        // System.out.println(s1.length());
-        // System.out.println("s2:"+AESUtil.decrypt(s1, key, iv));
-
-        //byte[] ss = "abc".getBytes();
-
-        //final Base64.Encoder encoder = Base64.getEncoder();
-        //編碼
-        //System.out.println(encoder.encodeToString(ss));
         try {
+            // AES 加密字符串
             byte[] ss = AESUtil.encrypt(content.getBytes("UTF-8"), key, iv);
-            //System.out.println(new String(ss, "UTF-8"));
-            //System.out.println(new String(ss, "iso-8859-1"));
-            //AESUtil.writeFile("1.dat", ss);
+
+            System.out.println("解密后内容：");
+            System.out.println(new String(AESUtil.decrypt(ss, key, iv)));
+
+            //AES 对文件进行加密
             AESUtil.encryptFile("new.txt", "2.dat", key, iv);
+            //AES 对文件进行解密
             AESUtil.decryptFile("2.dat", "new2.txt", key, iv);
+
+            //压缩文件
             AESUtil.compressFile("new.txt", "new.txt.gz");
+            //解压文件
             AESUtil.decompressFile("new.txt.gz", "new.txt.decompress");
         }
         catch(Exception ex) {
 
         }
     }
-
 }

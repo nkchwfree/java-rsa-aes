@@ -22,7 +22,7 @@ import java.io.BufferedReader;
 
 public class RSAUtils {
     public static final String CHARSET = "UTF-8";
-    public static final String RSA_ALGORITHM = "RSA"; // ALGORITHM ['ælgərɪð(ə)m] 算法的意思
+    public static final String RSA_ALGORITHM = "RSA";
 
     /**
      * 得到公钥
